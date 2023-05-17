@@ -1,0 +1,931 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/JLALLANOSM/Sis420_LlanosMendoza/blob/main/Lab9/lab9\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fxYd72KmVn8x"
+      },
+      "source": [
+        "# Ejercicio de programación Regresión Lineal Multiple"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 87,
+      "metadata": {
+        "id": "-NQwq_hsVn80"
+      },
+      "outputs": [],
+      "source": [
+        "# utilizado para manejos de directorios y rutas\n",
+        "import os\n",
+        "\n",
+        "# Computacion vectorial y cientifica para python\n",
+        "import numpy as np\n",
+        "\n",
+        "# Librerias para graficación (trazado de gráficos)\n",
+        "from matplotlib import pyplot\n",
+        "from mpl_toolkits.mplot3d import Axes3D  # Necesario para graficar superficies 3D\n",
+        "\n",
+        "# llama a matplotlib a embeber graficas dentro de los cuadernillos\n",
+        "%matplotlib inline"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dl4y9LL2Vn81"
+      },
+      "source": [
+        "## 2 Regresión lineal con multiples variables\n",
+        "\n",
+        "Se implementa la regresion lineal multivariable para predecir el precio de las casas. El archivo `Datasets/ex1data2.txt` contiene un conjunto de entrenamiento de precios de casas en Portland, Oregon. La primera columna es el tamaño de la casa en metros cuadrados, la segunda columna es el numero de cuartos, y la tercera columna es el precio de la casa. \n",
+        "\n",
+        "<a id=\"section4\"></a>\n",
+        "### 2.1 Normalización de caracteristicas\n",
+        "\n",
+        "Al visualizar los datos se puede observar que las caracteristicas tienen diferentes magnitudes, por lo cual se debe transformar cada valor en una escala de valores similares, esto con el fin de que el descenso por el gradiente pueda converger mas rapidamente."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "1MmuovO0q6QH",
+        "outputId": "3611cc80-e628-4162-86f5-8231975a183a"
+      },
+      "execution_count": 88,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(\"/content/drive\", force_remount=True).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 89,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "IzvXlXHMVn81",
+        "outputId": "199dfb1d-27d8-4086-e0ab-709130d0c376"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "-------------\n",
+            "  X[:,0] X[:, 1] X[:, 2]         y\n",
+            "------------------------------------\n",
+            "      34       0       3  400000\n",
+            "      52       2       3  410000\n",
+            "     140      50       5 1950000\n",
+            "      32       6       2  305500\n",
+            "      33       5       2  365000\n",
+            "      30       3       2  350000\n",
+            "      33       2       2  290000\n",
+            "      50       5       3  529000\n",
+            "      50       2       3  500000\n",
+            "      47       7       3  460000\n",
+            "      42       3       3  470000\n",
+            "      56       2       3  475000\n",
+            "      55       6       3  450000\n",
+            "      31       5       2  370000\n",
+            "      39       0       2  405000\n",
+            "      32       2       2  330000\n",
+            "      36       2       2  350000\n",
+            "      45       0       1  415000\n",
+            "      36       7       3  340000\n",
+            "      40       3       3  350000\n",
+            "      46       3       3  420000\n",
+            "      59      11       3  758000\n",
+            "      32       4       2  390000\n",
+            "      47       1       3  410000\n",
+            "      47       3       3  400000\n",
+            "      45       3       3  435000\n",
+            "      46       4       1  420000\n",
+            "      36       3       2  300000\n",
+            "      35       5       1  320000\n",
+            "      34       2       2  370000\n",
+            "      31       4       2  300000\n",
+            "      41       7       3  430000\n",
+            "      42       3       3  430000\n",
+            "      34       2       2  280000\n",
+            "      39       6       3  385000\n",
+            "      51       3       3  390000\n",
+            "      26       4       1  268000\n",
+            "      58       5       3  588000\n",
+            "      39       7       3  450000\n",
+            "      42       2       3  400000\n",
+            "      42       3       3  395000\n",
+            "      47       3       0  418500\n",
+            "      37       3       2  370000\n",
+            "      47       4       3  425000\n",
+            "      32       2       2  290000\n",
+            "      30       0       2  310000\n",
+            "      48       2       0  470000\n",
+            "      45       3       3  405000\n",
+            "      22       0       1  220000\n",
+            "      42       3       3  480000\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Cargar datos\n",
+        "# data = np.loadtxt(os.path.join('Datasets', 'ex1data2.txt'), delimiter=',')\n",
+        "data = np.loadtxt('/content/drive/MyDrive/datasets/AlquilerPrecio.txt', delimiter=',')\n",
+        "X = data[:100, 4:7]\n",
+        "y = data[:100, 2]\n",
+        "m = y.size\n",
+        "\n",
+        "print('-------------')\n",
+        "# imprimir algunos puntos de datos\n",
+        "print('{:>8s}{:>8s}{:>8s}{:>10s}'.format('X[:,0]', 'X[:, 1]','X[:, 2]', 'y'))\n",
+        "print('-'*36)\n",
+        "for i in range(50):\n",
+        "    print('{:8.0f}{:8.0f}{:8.0f}{:8.0f}'.format(X[i, 0], X[i, 1], X[i, 2], y[i]))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pP-oF-Y8W3zp"
+      },
+      "source": [
+        "## 2 Regresión lineal con multiples variables\n",
+        "\n",
+        "Se implementa la regresion lineal multivariable para predecir el precio de las casas. El archivo `Datasets/ex1data2.txt` contiene un conjunto de entrenamiento de precios de casas en Portland, Oregon. La primera columna es el tamaño de la casa en metros cuadrados, la segunda columna es el numero de cuartos, y la tercera columna es el precio de la casa. \n",
+        "\n",
+        "<a id=\"section4\"></a>\n",
+        "### 2.1 Normalización de caracteristicas\n",
+        "\n",
+        "Al visualizar los datos se puede observar que las caracteristicas tienen diferentes magnitudes, por lo cual se debe transformar cada valor en una escala de valores similares, esto con el fin de que el descenso por el gradiente pueda converger mas rapidamente."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Lr8JRNkyVn82"
+      },
+      "source": [
+        "La desviación estándar es una forma de medir cuánta variación hay en el rango de valores de una característica en particular (la mayoría de los puntos caeran en un rango de ± 2 en relación a la desviaciones estándar de la media); esta es una alternativa a tomar el rango de valores (max-min). En `numpy`, se puede usar la función `std` para calcular la desviacion estandar. \n",
+        "\n",
+        "Por ejemplo, la caracteristica`X[:, 0]` contiene todos los valores de $x_1$ (tamaño de las casas) en el conjunto de entrenamiento, entonces `np.std(X[:, 0])` calcula la desviacion estandar de los tamaños de las casas.\n",
+        "En el momento en que se llama a la función `featureNormalize`, la columna adicional de unos correspondiente a $ x_0 = 1 $ aún no se ha agregado a $ X $. \n",
+        "\n",
+        "<div class=\"alert alert-block alert-warning\">\n",
+        "**Notas para la implementación:** Cuando se normalize una caracteristica, es importante almacenar los valores usados para la normalización - el valor de la media y el valor de la desviación estandar usado para los calculos. Despues de aprender los parametros del modelo, se deseara predecir los precios de casas que no se han visto antes. Dado un nuevo valor de x (area del living room y el numero de dormitorios), primero se debe normalizar x usando la media y la desviacion estandar que se empleo anteriormente en el conjunto de entrenamiento para entrenar el modelo.\n",
+        "</div>\n",
+        "<a id=\"featureNormalize\"></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 90,
+      "metadata": {
+        "id": "dgT4rR9iVn82"
+      },
+      "outputs": [],
+      "source": [
+        "def  featureNormalize(X):\n",
+        "    X_norm = X.copy()\n",
+        "    mu = np.zeros(X.shape[0])\n",
+        "    sigma = np.zeros(X.shape[0])\n",
+        "\n",
+        "    mu = np.mean(X, axis = 0)\n",
+        "    sigma = np.std(X, axis = 0)\n",
+        "    X_norm = (X - mu) / sigma\n",
+        "    \n",
+        "    return X_norm, mu, sigma"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 91,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MfiaMoWEVn82",
+        "outputId": "35a9a5e5-c431-4941-bcbc-11f8de445860"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[[ 34.   0.   3.]\n",
+            " [ 52.   2.   3.]\n",
+            " [140.  50.   5.]\n",
+            " [ 32.   6.   2.]\n",
+            " [ 33.   5.   2.]\n",
+            " [ 30.   3.   2.]\n",
+            " [ 33.   2.   2.]\n",
+            " [ 50.   5.   3.]\n",
+            " [ 50.   2.   3.]\n",
+            " [ 47.   7.   3.]\n",
+            " [ 42.   3.   3.]\n",
+            " [ 56.   2.   3.]\n",
+            " [ 55.   6.   3.]\n",
+            " [ 31.   5.   2.]\n",
+            " [ 39.   0.   2.]\n",
+            " [ 32.   2.   2.]\n",
+            " [ 36.   2.   2.]\n",
+            " [ 45.   0.   1.]\n",
+            " [ 36.   7.   3.]\n",
+            " [ 40.   3.   3.]\n",
+            " [ 46.   3.   3.]\n",
+            " [ 59.  11.   3.]\n",
+            " [ 32.   4.   2.]\n",
+            " [ 47.   1.   3.]\n",
+            " [ 47.   3.   3.]\n",
+            " [ 45.   3.   3.]\n",
+            " [ 46.   4.   1.]\n",
+            " [ 36.   3.   2.]\n",
+            " [ 35.   5.   1.]\n",
+            " [ 34.   2.   2.]\n",
+            " [ 31.   4.   2.]\n",
+            " [ 41.   7.   3.]\n",
+            " [ 42.   3.   3.]\n",
+            " [ 34.   2.   2.]\n",
+            " [ 39.   6.   3.]\n",
+            " [ 51.   3.   3.]\n",
+            " [ 26.   4.   1.]\n",
+            " [ 58.   5.   3.]\n",
+            " [ 39.   7.   3.]\n",
+            " [ 42.   2.   3.]\n",
+            " [ 42.   3.   3.]\n",
+            " [ 47.   3.   0.]\n",
+            " [ 37.   3.   2.]\n",
+            " [ 47.   4.   3.]\n",
+            " [ 32.   2.   2.]\n",
+            " [ 30.   0.   2.]\n",
+            " [ 48.   2.   0.]\n",
+            " [ 45.   3.   3.]\n",
+            " [ 22.   0.   1.]\n",
+            " [ 42.   3.   3.]\n",
+            " [ 42.   3.   3.]\n",
+            " [ 34.   2.   2.]\n",
+            " [ 45. 297.   3.]\n",
+            " [ 32.   2.   2.]\n",
+            " [ 34.   0.   2.]\n",
+            " [ 31.   5.   2.]\n",
+            " [ 35.   0.   0.]\n",
+            " [ 30.   6.   2.]\n",
+            " [ 34.   2.   2.]\n",
+            " [ 33.   3.   2.]\n",
+            " [ 32.   2.   2.]\n",
+            " [ 31.   2.   2.]\n",
+            " [ 24.   2.   2.]\n",
+            " [ 35.   0.   0.]\n",
+            " [ 35.   3.   2.]\n",
+            " [ 33.   3.   2.]\n",
+            " [ 44.   3.   3.]\n",
+            " [ 43.   3.   3.]\n",
+            " [ 54.   3.   3.]\n",
+            " [ 26.   5.   2.]\n",
+            " [ 43.   3.   3.]\n",
+            " [ 43.   4.   3.]\n",
+            " [ 34.   2.   3.]\n",
+            " [ 54.   6.   3.]\n",
+            " [ 54.   0.   3.]\n",
+            " [ 43.   4.   3.]\n",
+            " [ 47.   2.   3.]\n",
+            " [ 31.   3.   2.]\n",
+            " [ 43.   4.   3.]\n",
+            " [ 51.   2.   3.]\n",
+            " [ 50.   0.   3.]\n",
+            " [ 42.   1.   3.]\n",
+            " [ 35.   2.   3.]\n",
+            " [ 29.   0.   2.]\n",
+            " [ 31.   6.   2.]\n",
+            " [ 30.   2.   2.]\n",
+            " [ 32.   0.   2.]\n",
+            " [ 37.   0.   2.]\n",
+            " [ 35.   5.   3.]\n",
+            " [ 53.   0.   2.]\n",
+            " [ 29.   0.   2.]\n",
+            " [ 47.   1.   3.]\n",
+            " [ 36.   4.   2.]\n",
+            " [ 27.   0.   1.]\n",
+            " [ 59.  10.   3.]\n",
+            " [ 34.   2.   2.]\n",
+            " [ 47.   1.   3.]\n",
+            " [ 30.   0.   1.]\n",
+            " [ 43.   0.   0.]\n",
+            " [ 20.   0.   1.]]\n",
+            "Media calculada: [40.31  6.27  2.32]\n",
+            "Desviación estandar calculada: [13.27531167 29.67451937  0.85883642]\n",
+            "[[-4.75318407e-01 -2.11292386e-01  7.91768936e-01]\n",
+            " [ 8.80581962e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 7.50942821e+00  1.47365487e+00  3.12050110e+00]\n",
+            " [-6.25974004e-01 -9.09871518e-03 -3.72597146e-01]\n",
+            " [-5.50646206e-01 -4.27976603e-02 -3.72597146e-01]\n",
+            " [-7.76629600e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [-5.50646206e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 7.29926366e-01 -4.27976603e-02  7.91768936e-01]\n",
+            " [ 7.29926366e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 5.03942971e-01  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.18189316e+00 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.10656536e+00 -9.09871518e-03  7.91768936e-01]\n",
+            " [-7.01301802e-01 -4.27976603e-02 -3.72597146e-01]\n",
+            " [-9.86794158e-02 -2.11292386e-01 -3.72597146e-01]\n",
+            " [-6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-3.24662811e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 3.53287374e-01 -2.11292386e-01 -1.53696323e+00]\n",
+            " [-3.24662811e-01  2.46002299e-02  7.91768936e-01]\n",
+            " [-2.33516175e-02 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 4.28615172e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.40787655e+00  1.59396010e-01  7.91768936e-01]\n",
+            " [-6.25974004e-01 -7.64966054e-02 -3.72597146e-01]\n",
+            " [ 5.03942971e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [ 5.03942971e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 3.53287374e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 4.28615172e-01 -7.64966054e-02 -1.53696323e+00]\n",
+            " [-3.24662811e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [-3.99990609e-01 -4.27976603e-02 -1.53696323e+00]\n",
+            " [-4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-7.01301802e-01 -7.64966054e-02 -3.72597146e-01]\n",
+            " [ 5.19761808e-02  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [-4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-9.86794158e-02 -9.09871518e-03  7.91768936e-01]\n",
+            " [ 8.05254164e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [-1.07794079e+00 -7.64966054e-02 -1.53696323e+00]\n",
+            " [ 1.33254875e+00 -4.27976603e-02  7.91768936e-01]\n",
+            " [-9.86794158e-02  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.27303979e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 5.03942971e-01 -1.10195551e-01 -2.70132931e+00]\n",
+            " [-2.49335012e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 5.03942971e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [-6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-7.76629600e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 5.79270769e-01 -1.43894496e-01 -2.70132931e+00]\n",
+            " [ 3.53287374e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [-1.37925199e+00 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [-4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 3.53287374e-01  9.79729432e+00  7.91768936e-01]\n",
+            " [-6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-4.75318407e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [-7.01301802e-01 -4.27976603e-02 -3.72597146e-01]\n",
+            " [-3.99990609e-01 -2.11292386e-01 -2.70132931e+00]\n",
+            " [-7.76629600e-01 -9.09871518e-03 -3.72597146e-01]\n",
+            " [-4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-5.50646206e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [-6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-7.01301802e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-1.22859639e+00 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-3.99990609e-01 -2.11292386e-01 -2.70132931e+00]\n",
+            " [-3.99990609e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [-5.50646206e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 2.77959576e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 2.02631777e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.03123756e+00 -1.10195551e-01  7.91768936e-01]\n",
+            " [-1.07794079e+00 -4.27976603e-02 -3.72597146e-01]\n",
+            " [ 2.02631777e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 2.02631777e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [-4.75318407e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.03123756e+00 -9.09871518e-03  7.91768936e-01]\n",
+            " [ 1.03123756e+00 -2.11292386e-01  7.91768936e-01]\n",
+            " [ 2.02631777e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [ 5.03942971e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [-7.01301802e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 2.02631777e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [ 8.05254164e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 7.29926366e-01 -2.11292386e-01  7.91768936e-01]\n",
+            " [ 1.27303979e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [-3.99990609e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [-8.51957399e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [-7.01301802e-01 -9.09871518e-03 -3.72597146e-01]\n",
+            " [-7.76629600e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [-6.25974004e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [-2.49335012e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [-3.99990609e-01 -4.27976603e-02  7.91768936e-01]\n",
+            " [ 9.55909760e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [-8.51957399e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 5.03942971e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [-3.24662811e-01 -7.64966054e-02 -3.72597146e-01]\n",
+            " [-1.00261300e+00 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 1.40787655e+00  1.25697065e-01  7.91768936e-01]\n",
+            " [-4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 5.03942971e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [-7.76629600e-01 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 2.02631777e-01 -2.11292386e-01 -2.70132931e+00]\n",
+            " [-1.52990758e+00 -2.11292386e-01 -1.53696323e+00]]\n"
+          ]
+        }
+      ],
+      "source": [
+        "# llama featureNormalize con los datos cargados\n",
+        "X_norm, mu, sigma = featureNormalize(X)\n",
+        "\n",
+        "print(X)\n",
+        "print('Media calculada:', mu)\n",
+        "print('Desviación estandar calculada:', sigma)\n",
+        "print(X_norm)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pDbib1JVVn82"
+      },
+      "source": [
+        "Despues de `featureNormalize` la funcion es provada, se añade el temino de interseccion a `X_norm`:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 92,
+      "metadata": {
+        "id": "qXpGaaD0Vn83"
+      },
+      "outputs": [],
+      "source": [
+        "# Añade el termino de interseccion a X\n",
+        "# (Columna de unos para X0)\n",
+        "X = np.concatenate([np.ones((m, 1)), X_norm], axis=1)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 93,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Pzz24OdaVn83",
+        "outputId": "f3d18024-6170-42dd-96db-3a99e9d3dd3a"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[[ 1.00000000e+00 -4.75318407e-01 -2.11292386e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  8.80581962e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  7.50942821e+00  1.47365487e+00  3.12050110e+00]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -9.09871518e-03 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -5.50646206e-01 -4.27976603e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.76629600e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -5.50646206e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  7.29926366e-01 -4.27976603e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  7.29926366e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.18189316e+00 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.10656536e+00 -9.09871518e-03  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -7.01301802e-01 -4.27976603e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -9.86794158e-02 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -3.24662811e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  3.53287374e-01 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 1.00000000e+00 -3.24662811e-01  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -2.33516175e-02 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  4.28615172e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.40787655e+00  1.59396010e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -7.64966054e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  3.53287374e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  4.28615172e-01 -7.64966054e-02 -1.53696323e+00]\n",
+            " [ 1.00000000e+00 -3.24662811e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -3.99990609e-01 -4.27976603e-02 -1.53696323e+00]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.01301802e-01 -7.64966054e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  5.19761808e-02  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -9.86794158e-02 -9.09871518e-03  7.91768936e-01]\n",
+            " [ 1.00000000e+00  8.05254164e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -1.07794079e+00 -7.64966054e-02 -1.53696323e+00]\n",
+            " [ 1.00000000e+00  1.33254875e+00 -4.27976603e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -9.86794158e-02  2.46002299e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -1.10195551e-01 -2.70132931e+00]\n",
+            " [ 1.00000000e+00 -2.49335012e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.76629600e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  5.79270769e-01 -1.43894496e-01 -2.70132931e+00]\n",
+            " [ 1.00000000e+00  3.53287374e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -1.37925199e+00 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  3.53287374e-01  9.79729432e+00  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.01301802e-01 -4.27976603e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -3.99990609e-01 -2.11292386e-01 -2.70132931e+00]\n",
+            " [ 1.00000000e+00 -7.76629600e-01 -9.09871518e-03 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -5.50646206e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.01301802e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -1.22859639e+00 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -3.99990609e-01 -2.11292386e-01 -2.70132931e+00]\n",
+            " [ 1.00000000e+00 -3.99990609e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -5.50646206e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  2.77959576e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  2.02631777e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.03123756e+00 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -1.07794079e+00 -4.27976603e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  2.02631777e-01 -1.10195551e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  2.02631777e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.03123756e+00 -9.09871518e-03  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.03123756e+00 -2.11292386e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  2.02631777e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -7.01301802e-01 -1.10195551e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  2.02631777e-01 -7.64966054e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  8.05254164e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  7.29926366e-01 -2.11292386e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00  1.27303979e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -3.99990609e-01 -1.43894496e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -8.51957399e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.01301802e-01 -9.09871518e-03 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -7.76629600e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -6.25974004e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -2.49335012e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -3.99990609e-01 -4.27976603e-02  7.91768936e-01]\n",
+            " [ 1.00000000e+00  9.55909760e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -8.51957399e-01 -2.11292386e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -3.24662811e-01 -7.64966054e-02 -3.72597146e-01]\n",
+            " [ 1.00000000e+00 -1.00261300e+00 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 1.00000000e+00  1.40787655e+00  1.25697065e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -4.75318407e-01 -1.43894496e-01 -3.72597146e-01]\n",
+            " [ 1.00000000e+00  5.03942971e-01 -1.77593441e-01  7.91768936e-01]\n",
+            " [ 1.00000000e+00 -7.76629600e-01 -2.11292386e-01 -1.53696323e+00]\n",
+            " [ 1.00000000e+00  2.02631777e-01 -2.11292386e-01 -2.70132931e+00]\n",
+            " [ 1.00000000e+00 -1.52990758e+00 -2.11292386e-01 -1.53696323e+00]]\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(X)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "V54HlIKAVn83"
+      },
+      "source": [
+        "<a id=\"section5\"></a>\n",
+        "### 2.2 Descenso por el gradiente\n",
+        "\n",
+        "En el ejemplo anterior se implemento el descenso por el gradiente para un problema de regresion univariable. La unica diferencia es que ahora existe una caracteristica adicional en la matriz $X$. La función de hipótesis y la regla de actualización del descenso del gradiente por lotes permanecen sin cambios.\n",
+        "\n",
+        "La implementacion de las funciones `computeCostMulti` y `gradientDescentMulti` son similares a la funcion de costo y función de descenso por el gradiente de la regresión lineal multiple es similar al de la regresion lineal multivariable. Es importante garantizar que el codigo soporte cualquier numero de caracteristicas y esten bien vectorizadas.\n",
+        "\n",
+        "Se puede utilizar `shape`, propiedad de los arrays `numpy`, para identificar cuantas caracteristicas estan consideradas en el dataset.\n",
+        "\n",
+        "<div class=\"alert alert-block alert-warning\">\n",
+        "**Nota de implementación:** En el caso de multivariables, la función de costo puede se escrita considerando la forma vectorizada de la siguiente manera:\n",
+        "\n",
+        "$$ J(\\theta) = \\frac{1}{2m}(X\\theta - \\vec{y})^T(X\\theta - \\vec{y}) $$\n",
+        "\n",
+        "donde:\n",
+        "\n",
+        "$$ X = \\begin{pmatrix}\n",
+        "          - (x^{(1)})^T - \\\\\n",
+        "          - (x^{(2)})^T - \\\\\n",
+        "          \\vdots \\\\\n",
+        "          - (x^{(m)})^T - \\\\ \\\\\n",
+        "        \\end{pmatrix} \\qquad \\mathbf{y} = \\begin{bmatrix} y^{(1)} \\\\ y^{(2)} \\\\ \\vdots \\\\ y^{(m)} \\\\\\end{bmatrix}$$\n",
+        "\n",
+        "La version vectorizada es eficiente cuando se trabaja con herramientas de calculo numericos computacional como `numpy`. \n",
+        "</div>\n",
+        "\n",
+        "<a id=\"computeCostMulti\"></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 94,
+      "metadata": {
+        "id": "R5xCTuCUVn83"
+      },
+      "outputs": [],
+      "source": [
+        "def computeCostMulti(X, y, theta):\n",
+        "    # Inicializa algunos valores utiles\n",
+        "    m = y.shape[0] # numero de ejemplos de entrenamiento\n",
+        "    \n",
+        "    J = 0\n",
+        "    \n",
+        "    h = np.dot(X, theta)\n",
+        "    \n",
+        "    J = (1/(2 * m)) * np.sum(np.square(np.dot(X, theta) - y))\n",
+        "    \n",
+        "    return J\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 95,
+      "metadata": {
+        "id": "1FbQyFHtVn83"
+      },
+      "outputs": [],
+      "source": [
+        "def gradientDescentMulti(X, y, theta, alpha, num_iters):\n",
+        "    \n",
+        "    # Inicializa algunos valores \n",
+        "    m = y.shape[0] # numero de ejemplos de entrenamiento\n",
+        "    \n",
+        "    # realiza una copia de theta, el cual será acutalizada por el descenso por el gradiente\n",
+        "    theta = theta.copy()\n",
+        "    \n",
+        "    J_history = []\n",
+        "    \n",
+        "    for i in range(num_iters):\n",
+        "        theta = theta - (alpha / m) * (np.dot(X, theta) - y).dot(X)\n",
+        "        J_history.append(computeCostMulti(X, y, theta))\n",
+        "    \n",
+        "    return theta, J_history"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dJ2VxNfaVn83"
+      },
+      "source": [
+        "#### 3.2.1 Seleccionando coheficientes de aprendizaje\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 96,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 500
+        },
+        "id": "K4gVCgsfVn84",
+        "outputId": "64e8d02c-d934-46c2-faa6-9f0bad80fe68"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "theta calculado por el descenso por el gradiente: [406959.99999999 170389.36287503   1466.1193182   -7369.15147998]\n",
+            "El precio predecido para una sitio de 40 su y 20 st mas 2 ambientes (usando el descenso por el gradiente): $-995945\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 640x480 with 1 Axes>"
+            ],
+            "image/png": "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IyO1ePFiFRYWui4v79atmzp37mx5cQ0JJ64AALCfeq/ozJgxQ0ePHlXnzp2VlpamtLQ0de7cWceOHdOMGTO8UWODY+hGBgDAFuoddKZPn67y8vJa248eParp06dbUlRDRC8yAAD2U++gY4yp8wqjTZs2uV1y3pixoAMAgD143KMTFRUlh8Mhh8OhLl26uIWd6upqlZeXa9y4cV4psiFgRQcAAPvxOOjMmTNHxhjdfvvtmj59uiIiIlzvBQcHKyEhQcnJyV4pEgAA4Fx4HHRGjx4tSerQoYMGDhyoJk3O6XmgjQJnrgAAsId69+g0b97cdVm5JC1evFjDhw/XI488oqqqKkuLa0gcXGAOAIDt1Dvo3HXXXfryyy8lSbt379aIESPUtGlTLVy4UA899JDlBTZENCMDAGAP9Q46X375pXr37i1JWrhwoa666iq99dZbmjdvnt555x2r62s4WNABAMB2zunycqfTKUlasWKFrrvuOklSfHy8Dh48aG11AAAAP0G9g07//v31hz/8QW+88YZWr16tYcOGSZL27NmjmJgYywtsiAztyAAA2EK9g86cOXO0ceNGTZgwQVOmTHE94+qf//ynLr/8cssLbCg4cwUAgP3U+xrxXr16acuWLbW2/+lPf1JgYKAlRTV0NCMDAGAP53wznLy8PNdl5t27d1ffvn0tK6ohquuxGAAAwLfqHXT279+vESNGaPXq1YqMjJQkHT58WNdcc43mz5+vVq1aWV1jg8OCDgAA9lDvHp177rlH5eXl+uKLL3To0CEdOnRIW7duVVlZmSZOnOiNGhsE1nMAALCfeq/oLFu2TCtWrFC3bt1c27p3766srCxde+21lhYHAADwU9R7RcfpdCooKKjW9qCgINf9dRo9upEBALCFegedn/3sZ7r33nv17bffurZ98803uv/++zV48GBLi2tI6EUGAMB+6h10nn/+eZWVlSkhIUGdOnVSp06d1KFDB5WVlem5557zRo0NDus5AADYQ717dOLj47Vx40atWLFCO3bskCR169ZNKSkplhfXkPD0cgAA7Oec7qPjcDj085//XD//+c+trgcAAMAyHp+6Wrlypbp3766ysrJa75WWluqSSy7RmjVrLC2uoaIXGQAAe/A46MyZM0djx45VeHh4rfciIiJ01113afbs2ZYW15DQjAwAgP14HHQ2bdqkIUOGnPb9a6+9Vnl5eZYU1dDx9HIAAOzB46BTUlJS5/1zTmnSpIkOHDhgSVENEQs6AADYj8dBp23bttq6detp39+8ebPatGljSVENHT06AADYg8dB57rrrtOjjz6q48eP13rv2LFjysjI0PXXX29pcQ0KSzoAANiOx5eXT506Ve+++666dOmiCRMmqGvXrpKkHTt2KCsrS9XV1ZoyZYrXCgUAAKgvj4NOTEyMPv74Y919992aPHmyzH/PzzgcDqWmpiorK0sxMTFeK7Qh4cwVAAD2UK8bBrZv315Lly7V999/r8LCQhljdNFFFykqKspb9TUY3BkZAAD7Oac7I0dFRenSSy+1uha/QTMyAAD2UO+HeqJu3DAQAAD7Ieh4ATcMBADAHgg6FnFb0CHnAABgCwQdizhqnLsi5wAAYA8EHYvU7NExdCMDAGALBB2L1Dx1Rc4BAMAeCDoWcVvR8V0ZAACgBoKOZWr06JB0AACwBYKORdxXdEg6AADYgS2CTlZWlhISEhQaGqqkpCStX7/eo/3mz58vh8Oh4cOHe7dAD9CjAwCA/fg86CxYsEDp6enKyMjQxo0blZiYqNTUVO3fv/+M+3311Vd64IEHNGjQoPNU6Zk5uDUyAAC24/OgM3v2bI0dO1ZjxoxR9+7dNXfuXDVt2lSvvvrqafeprq7WyJEjNX36dHXs2PE8Vnt67is6LOkAAGAHPg06VVVVysvLU0pKimtbQECAUlJSlJube9r9ZsyYodatW+uOO+44H2V6hKuuAACwn3N6erlVDh48qOrqasXExLhtj4mJ0Y4dO+rcZ+3atfrrX/+q/Px8j75HZWWlKisrXV+XlZWdc71n4uCqKwAAbMfnp67q48iRI7r11lv1yiuvKDo62qN9MjMzFRER4XrFx8d7pTauugIAwH58uqITHR2twMBAlZSUuG0vKSlRbGxsrfG7du3SV199pbS0NNc2p9MpSWrSpIkKCgrUqVMnt30mT56s9PR019dlZWVeCzunsKIDAIA9+DToBAcHq1+/fsrOznZdIu50OpWdna0JEybUGn/xxRdry5YtbtumTp2qI0eO6Nlnn60zwISEhCgkJMQr9ddEjw4AAPbj06AjSenp6Ro9erT69++vAQMGaM6cOaqoqNCYMWMkSaNGjVLbtm2VmZmp0NBQ9ejRw23/yMhISaq1/XyjRwcAAPvxedAZMWKEDhw4oGnTpqm4uFi9e/fWsmXLXA3KRUVFCgiwfyuR+210SDoAANiBwzSym76UlZUpIiJCpaWlCg8Pt+y4O4rLNGTOGknSby6N16ybell2bAAAGrtz/ftt/6WSBoJTVwAA2A9BxyJcXg4AgP0QdCzCQz0BALAfgo5FuLwcAAD7IehYhh4dAADshqBjEXp0AACwH4KORbiNDgAA9kPQsYijxpIOOQcAAHsg6FjE/aorog4AAHZA0LEIV10BAGA/BB2LcGdkAADsh6BjEVZ0AACwH4KORWoGHSdLOgAA2AJBxyIOlnQAALAdgo5F3K66IukAAGALBB2LuC3okHMAALAFgo5FuOoKAAD7IehYhGddAQBgPwQdi7jfGdlnZQAAgBoIOlbhoisAAGyHoGMRenQAALAfgo5FavbosKYDAIA9EHQsQo8OAAD2Q9CxSM07I5NzAACwB4KORdxXdIg6AADYAUHHIjzqCgAA+yHoWISrrgAAsB+CjlVY0QEAwHYIOhZxf6gnUQcAADsg6FjEcfYhAADgPCPoWMTt8nIWdAAAsAWCjkXcLi+nSwcAAFsg6FjEvUfHd3UAAIAfEXQswuXlAADYD0HHIu43DCTpAABgBwQdL2BFBwAAeyDoWIRHQAAAYD8EHYs4uDUyAAC2Q9CxCD06AADYD0HHIm730SHnAABgCwQdi7jdGdmHdQAAgB8RdCzivqJD1AEAwA4IOhbhqisAAOyHoGMRHuoJAID9EHS8gJwDAIA9EHQsFPDfRR16dAAAsAeCjoVOnb4i5wAAYA8EHQud6tLhhoEAANgDQcdCDtepK9/WAQAAfkDQsdCp510RdAAAsAeCjpVOrej4tgoAAPBfBB0LuXp0WNIBAMAWCDoWqnl3ZAAA4HsEHQvRowMAgL0QdCzkuuqKLh0AAGyBoGOhH3t0fFoGAAD4L4KOhVx3RvZxHQAA4AcEHQtx1RUAAPZC0LES99EBAMBWbBF0srKylJCQoNDQUCUlJWn9+vWnHfvKK69o0KBBioqKUlRUlFJSUs44/nxyXV1O0gEAwBZ8HnQWLFig9PR0ZWRkaOPGjUpMTFRqaqr2799f5/icnBzdfPPNWrVqlXJzcxUfH69rr71W33zzzXmuvDZ6dAAAsBeH8XFDSVJSki699FI9//zzkiSn06n4+Hjdc889mjRp0ln3r66uVlRUlJ5//nmNGjXqrOPLysoUERGh0tJShYeH/+T6a+o94986fPSEElo2Vc6D11h6bAAAGrNz/fvt0xWdqqoq5eXlKSUlxbUtICBAKSkpys3N9egYR48e1YkTJ9SiRYs636+srFRZWZnby1sC/rui42RJBwAAW/Bp0Dl48KCqq6sVExPjtj0mJkbFxcUeHePhhx9WXFycW1iqKTMzUxEREa5XfHz8T677dAK4YSAAALbi8x6dn2LWrFmaP3++3nvvPYWGhtY5ZvLkySotLXW99u7d67V6TvXoOJ1e+xYAAKAemvjym0dHRyswMFAlJSVu20tKShQbG3vGfZ966inNmjVLK1asUK9evU47LiQkRCEhIZbUezaBrlNXrOgAAGAHPl3RCQ4OVr9+/ZSdne3a5nQ6lZ2dreTk5NPu9+STT+rxxx/XsmXL1L9///NRqkdOnbqqpkkHAABb8OmKjiSlp6dr9OjR6t+/vwYMGKA5c+aooqJCY8aMkSSNGjVKbdu2VWZmpiTpiSee0LRp0/TWW28pISHB1cvTrFkzNWvWzGefQ5ICAmhGBgDATnwedEaMGKEDBw5o2rRpKi4uVu/evbVs2TJXg3JRUZECAn5ceHrxxRdVVVWlX/7yl27HycjI0GOPPXY+S68lgFNXAADYis/vo3O+efM+Otc8laM9BysUERakTRnXWnpsAAAaswZ5Hx1/898FHVZ0AACwCYKOhVxXXdGkAwCALRB0LMSdkQEAsBeCjoVOXXVVzakrAABsgaBjocD/zmYj6+8GAMC2CDoWOnXqihsGAgBgDwQdC9GjAwCAvRB0LHTqERASV14BAGAHBB0LBdZIOtxLBwAA3yPoWMjh+DHocOUVAAC+R9CxUGCNoEPOAQDA9wg6Fqrx7FGuvAIAwAYIOhYKcNCjAwCAnRB0LOQWdJw+LAQAAEgi6FiKq64AALAXgo6Fat5Hh6uuAADwPYKOhejRAQDAXgg6FqJHBwAAeyHoWIgeHQAA7IWgYyFHzR4d7qMDAIDPEXQsVHNFhwUdAAB8j6BjoQCedQUAgK0QdCzkFnQ4dQUAgM8RdCxU8z46hhUdAAB8jqBjoZo9Opy6AgDA9wg6FnJwHx0AAGyFoGOhJjVWdE6SdAAA8DmCjoWCAn+czhPVnLoCAMDXCDoWCmpSY0WnmhUdAAB8jaBjoWBWdAAAsBWCjoXcT12xogMAgK8RdCxUM+hUEXQAAPA5go6FggJ/7NFhRQcAAN8j6FgouAmnrgAAsBOCjoXcenRO0owMAICvEXQsRI8OAAD2QtCxED06AADYC0HHQsFcXg4AgK0QdCzEIyAAALAXgo6FgmpcdVV1khUdAAB8jaBjoZqnrioJOgAA+BxBx0LNQpq4/l1RedKHlQAAAImgY6lmoT8GnXKCDgAAPkfQsVDNFZ0jxwk6AAD4GkHHQs3dVnRO+LASAAAgEXQsFdIkQE0CfrhpICs6AAD4HkHHQg6Hw9WnU3acFR0AAHyNoGOxmOahkqTi0uNyOrlpIAAAvkTQsVh8izBJP9wZueTIcR9XAwBA40bQsVi7Fhe4/r19X5kPKwEAAE3OPgT1kdSxhV5dt0eS9Icl2/XpnkO6ILiJHJIcjh/6eHTq33Kc4UgAADRcIy9rp/DQIF+XQdCx2pUXtVJMeIhKyiq1+0CFXlq929clAQBw3qUltrFF0OHUlcXCggP18q391b5lU1+XAgBAo8eKjhckxkdq1e+v1u6D5dp/pFLHT1TLGP3wkmSMEddjAQD8WcsLQnxdgiSCjtcEBDjUuXVzdW7d3NelAADQaHHqCgAA+C2CDgAA8FsEHQAA4LcIOgAAwG/ZIuhkZWUpISFBoaGhSkpK0vr16884fuHChbr44osVGhqqnj17aunSpeepUgAA0JD4POgsWLBA6enpysjI0MaNG5WYmKjU1FTt37+/zvEff/yxbr75Zt1xxx36/PPPNXz4cA0fPlxbt249z5UDAAC7cxhjfHpLl6SkJF166aV6/vnnJUlOp1Px8fG65557NGnSpFrjR4wYoYqKCn3wwQeubZdddpl69+6tuXPnnvX7lZWVKSIiQqWlpQoPD7fugwAAAK8517/fPl3RqaqqUl5enlJSUlzbAgIClJKSotzc3Dr3yc3NdRsvSampqacdX1lZqbKyMrcXAABoHHwadA4ePKjq6mrFxMS4bY+JiVFxcXGd+xQXF9drfGZmpiIiIlyv+Ph4a4oHAAC25/MeHW+bPHmySktLXa+9e/f6uiQAAHCe+PQRENHR0QoMDFRJSYnb9pKSEsXGxta5T2xsbL3Gh4SEKCTEHs/bAAAA55dPV3SCg4PVr18/ZWdnu7Y5nU5lZ2crOTm5zn2Sk5PdxkvS8uXLTzseAAA0Xj5/qGd6erpGjx6t/v37a8CAAZozZ44qKio0ZswYSdKoUaPUtm1bZWZmSpLuvfdeXXXVVXr66ac1bNgwzZ8/Xxs2bNDLL7/sy48BAABsyOdBZ8SIETpw4ICmTZum4uJi9e7dW8uWLXM1HBcVFSkg4MeFp8svv1xvvfWWpk6dqkceeUQXXXSRFi1apB49enj0/U5dTc/VVwAANByn/m7X9644Pr+Pzvn29ddfc+UVAAAN1N69e3XhhRd6PL7RBR2n06lvv/1WzZs3l8PhsPTYZWVlio+P1969e7kZ4VkwV55jrjzHXHmOuaof5stz3porY4yOHDmiuLg4tzM9Z+PzU1fnW0BAQL2S4LkIDw/nF8FDzJXnmCvPMVeeY67qh/nynDfmKiIiot77+P19dAAAQONF0AEAAH6LoGOhkJAQZWRkcINCDzBXnmOuPMdceY65qh/my3N2m6tG14wMAAAaD1Z0AACA3yLoAAAAv0XQAQAAfougY5GsrCwlJCQoNDRUSUlJWr9+va9LstRjjz0mh8Ph9rr44otd7x8/flzjx49Xy5Yt1axZM9100021njJfVFSkYcOGqWnTpmrdurUefPBBnTx50m1MTk6O+vbtq5CQEHXu3Fnz5s2rVYvd5vqjjz5SWlqa4uLi5HA4tGjRIrf3jTGaNm2a2rRpo7CwMKWkpGjnzp1uYw4dOqSRI0cqPDxckZGRuuOOO1ReXu42ZvPmzRo0aJBCQ0MVHx+vJ598slYtCxcu1MUXX6zQ0FD17NlTS5curXct3na2+brttttq/awNGTLEbUxjmK/MzExdeumlat68uVq3bq3hw4eroKDAbYydfu88qcVbPJmrq6++utbP1bhx49zGNIa5kqQXX3xRvXr1ct3nJjk5Wf/617/qVV+DmiuDn2z+/PkmODjYvPrqq+aLL74wY8eONZGRkaakpMTXpVkmIyPDXHLJJWbfvn2u14EDB1zvjxs3zsTHx5vs7GyzYcMGc9lll5nLL7/c9f7JkydNjx49TEpKivn888/N0qVLTXR0tJk8ebJrzO7du03Tpk1Nenq62bZtm3nuuedMYGCgWbZsmWuMHed66dKlZsqUKebdd981ksx7773n9v6sWbNMRESEWbRokdm0aZP5xS9+YTp06GCOHTvmGjNkyBCTmJhoPvnkE7NmzRrTuXNnc/PNN7veLy0tNTExMWbkyJFm69at5u233zZhYWHmpZdeco1Zt26dCQwMNE8++aTZtm2bmTp1qgkKCjJbtmypVy3edrb5Gj16tBkyZIjbz9qhQ4fcxjSG+UpNTTWvvfaa2bp1q8nPzzfXXXedadeunSkvL3eNsdPv3dlq8SZP5uqqq64yY8eOdfu5Ki0tdb3fWObKGGPef/99s2TJEvPll1+agoIC88gjj5igoCCzdetWj+praHNF0LHAgAEDzPjx411fV1dXm7i4OJOZmenDqqyVkZFhEhMT63zv8OHDJigoyCxcuNC1bfv27UaSyc3NNcb88MctICDAFBcXu8a8+OKLJjw83FRWVhpjjHnooYfMJZdc4nbsESNGmNTUVNfXdp/r//3D7XQ6TWxsrPnTn/7k2nb48GETEhJi3n77bWOMMdu2bTOSzGeffeYa869//cs4HA7zzTffGGOMeeGFF0xUVJRrrowx5uGHHzZdu3Z1ff3rX//aDBs2zK2epKQkc9ddd3lcy/l2uqBzww03nHafxjpf+/fvN5LM6tWrXbXY5ffOk1rOp/+dK2N+CDr33nvvafdprHN1SlRUlPnLX/7ilz9XnLr6iaqqqpSXl6eUlBTXtoCAAKWkpCg3N9eHlVlv586diouLU8eOHTVy5EgVFRVJkvLy8nTixAm3Obj44ovVrl071xzk5uaqZ8+erqfSS1JqaqrKysr0xRdfuMbUPMapMaeO0RDnes+ePSouLnarOSIiQklJSW5zExkZqf79+7vGpKSkKCAgQJ9++qlrzJVXXqng4GDXmNTUVBUUFOj77793jTnT/HlSi13k5OSodevW6tq1q+6++2599913rvca63yVlpZKklq0aCHJXr93ntRyPv3vXJ3y5ptvKjo6Wj169NDkyZN19OhR13uNda6qq6s1f/58VVRUKDk52S9/rhrds66sdvDgQVVXV7v9B5ekmJgY7dixw0dVWS8pKUnz5s1T165dtW/fPk2fPl2DBg3S1q1bVVxcrODgYEVGRrrtExMTo+LiYklScXFxnXN06r0zjSkrK9OxY8f0/fffN7i5PvXZ6qq55udu3bq12/tNmjRRixYt3MZ06NCh1jFOvRcVFXXa+at5jLPVYgdDhgzRjTfeqA4dOmjXrl165JFHNHToUOXm5iowMLBRzpfT6dR9992ngQMHqkePHq767PJ750kt50tdcyVJt9xyi9q3b6+4uDht3rxZDz/8sAoKCvTuu+9KanxztWXLFiUnJ+v48eNq1qyZ3nvvPXXv3l35+fl+93NF0IFHhg4d6vp3r169lJSUpPbt2+sf//iHwsLCfFgZ/M1vfvMb17979uypXr16qVOnTsrJydHgwYN9WJnvjB8/Xlu3btXatWt9XYrtnW6u7rzzTte/e/bsqTZt2mjw4MHatWuXOnXqdL7L9LmuXbsqPz9fpaWl+uc//6nRo0dr9erVvi7LKzh19RNFR0crMDCwVhd4SUmJYmNjfVSV90VGRqpLly4qLCxUbGysqqqqdPjwYbcxNecgNja2zjk69d6ZxoSHhyssLKxBzvWpus5Uc2xsrPbv3+/2/smTJ3Xo0CFL5q/m+2erxY46duyo6OhoFRYWSmp88zVhwgR98MEHWrVqlS688ELXdjv93nlSy/lwurmqS1JSkiS5/Vw1prkKDg5W586d1a9fP2VmZioxMVHPPvusX/5cEXR+ouDgYPXr10/Z2dmubU6nU9nZ2UpOTvZhZd5VXl6uXbt2qU2bNurXr5+CgoLc5qCgoEBFRUWuOUhOTtaWLVvc/kAtX75c4eHh6t69u2tMzWOcGnPqGA1xrjt06KDY2Fi3msvKyvTpp5+6zc3hw4eVl5fnGrNy5Uo5nU7X/xgnJyfro48+0okTJ1xjli9frq5duyoqKso15kzz50ktdvT111/ru+++U5s2bSQ1nvkyxmjChAl67733tHLlylqn4uz0e+dJLd50trmqS35+viS5/Vw1hrk6HafTqcrKSv/8ufK4bRmnNX/+fBMSEmLmzZtntm3bZu68804TGRnp1pHe0P3+9783OTk5Zs+ePWbdunUmJSXFREdHm/379xtjfrgEsF27dmblypVmw4YNJjk52SQnJ7v2P3U54rXXXmvy8/PNsmXLTKtWreq8HPHBBx8027dvN1lZWXVejmi3uT5y5Ij5/PPPzeeff24kmdmzZ5vPP//c/Oc//zHG/HCJcmRkpFm8eLHZvHmzueGGG+q8vLxPnz7m008/NWvXrjUXXXSR2+XShw8fNjExMebWW281W7duNfPnzzdNmzatdbl0kyZNzFNPPWW2b99uMjIy6rxc+my1eNuZ5uvIkSPmgQceMLm5uWbPnj1mxYoVpm/fvuaiiy4yx48fdx2jMczX3XffbSIiIkxOTo7bJdFHjx51jbHT793ZavGms81VYWGhmTFjhtmwYYPZs2ePWbx4senYsaO58sorXcdoLHNljDGTJk0yq1evNnv27DGbN282kyZNMg6Hw/z73//2qL6GNlcEHYs899xzpl27diY4ONgMGDDAfPLJJ74uyVIjRowwbdq0McHBwaZt27ZmxIgRprCw0PX+sWPHzO9+9zsTFRVlmjZtav7v//7P7Nu3z+0YX331lRk6dKgJCwsz0dHR5ve//705ceKE25hVq1aZ3r17m+DgYNOxY0fz2muv1arFbnO9atUqI6nWa/To0caYHy5TfvTRR01MTIwJCQkxgwcPNgUFBW7H+O6778zNN99smjVrZsLDw82YMWPMkSNH3MZs2rTJXHHFFSYkJMS0bdvWzJo1q1Yt//jHP0yXLl1McHCwueSSS8ySJUvc3vekFm8703wdPXrUXHvttaZVq1YmKCjItG/f3owdO7ZWkG0M81XXHEly+52w0++dJ7V4y9nmqqioyFx55ZWmRYsWJiQkxHTu3Nk8+OCDbvfRMaZxzJUxxtx+++2mffv2Jjg42LRq1coMHjzYFXI8ra8hzRVPLwcAAH6LHh0AAOC3CDoAAMBvEXQAAIDfIugAAAC/RdABAAB+i6ADAAD8FkEHAAD4LYIOAADwWwQdALaUk5Mjh8NR64F+9fHYY4+pd+/eltVktdtuu03Dhw/3dRmAXyPoADZ12223yeFwaNasWW7bFy1aJIfD4aOqGpYHHnjA7YGAdgsWzz77rObNm+frMgC/RtABbCw0NFRPPPGEvv/+e1+X4pGqqipfl+CmWbNmatmypeXHtepzRkREKDIy0pJjAagbQQewsZSUFMXGxiozM/O0Y+o6PTNnzhwlJCS4vj61kjFz5kzFxMQoMjJSM2bM0MmTJ/Xggw+qRYsWuvDCC/Xaa6+5HWfv3r369a9/rcjISLVo0UI33HCDvvrqq1rH/eMf/6i4uDh17dpVkrRlyxb97Gc/U1hYmFq2bKk777xT5eXlZ/ysS5cuVZcuXRQWFqZrrrnG7fucsnbtWg0aNEhhYWGKj4/XxIkTVVFR4dHcPPbYY3r99de1ePFiORwOORwO5eTk/KTP+cYbb6h///5q3ry5YmNjdcstt2j//v1uNXzxxRe6/vrrFR4erubNm2vQoEHatWuX23FPqays1MSJE9W6dWuFhobqiiuu0GeffeZ6/9TpvOzsbPXv319NmzbV5ZdfroKCArfvuXjxYvXt21ehoaHq2LGjpk+frpMnT0qSjDF67LHH1K5dO4WEhCguLk4TJ048438boCEj6AA2FhgYqJkzZ+q5557T119//ZOOtXLlSn377bf66KOPNHv2bGVkZOj6669XVFSUPv30U40bN0533XWX6/ucOHFCqampat68udasWaN169apWbNmGjJkiNuKRnZ2tgoKCrR8+XJ98MEHqqioUGpqqqKiovTZZ59p4cKFWrFihSZMmHDa2vbu3asbb7xRaWlpys/P129/+1tNmjTJbcyuXbs0ZMgQ3XTTTdq8ebMWLFigtWvXnvG4NT3wwAP69a9/rSFDhmjfvn3at2+fLr/88nP+nKfm6PHHH9emTZu0aNEiffXVV7rttttc+3zzzTe68sorFRISopUrVyovL0+33367K3T8r4ceekjvvPOOXn/9dW3cuFGdO3dWamqqDh065DZuypQpevrpp7VhwwY1adJEt99+u+u9NWvWaNSoUbr33nu1bds2vfTSS5o3b57++Mc/SpLeeecdPfPMM3rppZe0c+dOLVq0SD179vRoDoEGqV7POgdw3owePdrccMMNxhhjLrvsMnP77bcbY4x57733TM1f3YyMDJOYmOi27zPPPGPat2/vdqz27dub6upq17auXbuaQYMGub4+efKkueCCC8zbb79tjDHmjTfeMF27djVOp9M1prKy0oSFhZkPP/zQddyYmBhTWVnpGvPyyy+bqKgoU15e7tq2ZMkSExAQYIqLi+v8rJMnTzbdu3d32/bwww8bSeb77783xhhzxx13mDvvvNNtzJo1a0xAQIA5duxYncf937mpOaennOvnrMtnn31mJJkjR464PleHDh1MVVVVneNr1lNeXm6CgoLMm2++6Xq/qqrKxMXFmSeffNIYY8yqVauMJLNixQrXmCVLlhhJrjkYPHiwmTlzZq3P2KZNG2OMMU8//bTp0qXLaWsC/A0rOkAD8MQTT+j111/X9u3bz/kYl1xyiQICfvyVj4mJcft/8oGBgWrZsqXr1MumTZtUWFio5s2bq1mzZmrWrJlatGih48ePu069SFLPnj0VHBzs+nr79u1KTEzUBRdc4No2cOBAOZ3OWqdYau6TlJTkti05Odnt602bNmnevHmuWpo1a6bU1FQ5nU7t2bPnHGbkx+Oey+eUpLy8PKWlpaldu3Zq3ry5rrrqKklSUVGRJCk/P1+DBg1SUFDQWevYtWuXTpw4oYEDB7q2BQUFacCAAbX+u/fq1cv17zZt2kiS23+3GTNmuM3T2LFjtW/fPh09elS/+tWvdOzYMXXs2FFjx47Ve++9d9oVJsAfNPF1AQDO7sorr1RqaqomT57sdmpEkgICAmSMcdt24sSJWsf43z+2Doejzm1Op1OSVF5ern79+unNN9+sdaxWrVq5/l0z0HhTeXm57rrrrjr7Sdq1a/eTjnsun/PUKbrU1FS9+eabatWqlYqKipSamuo65RUWFnbOdZ1Jzf9up67Aq/nfbfr06brxxhtr7RcaGqr4+HgVFBRoxYoVWr58uX73u9/pT3/6k1avXu1RIAMaGoIO0EDMmjVLvXv3djXCntKqVSsVFxfLGOP6o5efn/+Tv1/fvn21YMECtW7dWuHh4R7v161bN82bN08VFRWucLBu3ToFBATUqr3mPu+//77btk8++aRWPdu2bVPnzp3r+Ul+FBwcrOrq6lrHPZfPuWPHDn333XeaNWuW4uPjJUkbNmxwG9OrVy+9/vrrOnHixFlDRKdOnRQcHKx169apffv2kn4IrJ999pnuu+8+j+vq27evCgoKzjhPYWFhSktLU1pamsaPH6+LL75YW7ZsUd++fT3+PkBDwakroIHo2bOnRo4cqT//+c9u26+++modOHBATz75pHbt2qWsrCz961//+snfb+TIkYqOjtYNN9ygNWvWaM+ePcrJydHEiRPP2Bg9cuRIhYaGavTo0dq6datWrVqle+65R7feeqtiYmLq3GfcuHHauXOnHnzwQRUUFOitt96qdX+Zhx9+WB9//LEmTJig/Px87dy5U4sXL/a4GVmSEhIStHnzZhUUFOjgwYM6ceLEOX/Odu3aKTg4WM8995x2796t999/X48//rjbmAkTJqisrEy/+c1vtGHDBu3cuVNvvPFGnafwLrjgAt1999168MEHtWzZMm3btk1jx47V0aNHdccdd3j8GadNm6a//e1vmj59ur744gtt375d8+fP19SpUyVJ8+bN01//+ldt3bpVu3fv1t///neFhYW5whXgbwg6QAMyY8YM1ymKU7p166YXXnhBWVlZSkxM1Pr16/XAAw/85O/VtGlTffTRR2rXrp1uvPFGdevWTXfccYeOHz9+xpWPpk2b6sMPP9ShQ4d06aWX6pe//KUGDx6s559//rT7tGvXTu+8844WLVqkxMREzZ07VzNnznQb06tXL61evVpffvmlBg0apD59+mjatGmKi4vz+DONHTtWXbt2Vf/+/dWqVSutW7funD9nq1atNG/ePC1cuFDdu3fXrFmz9NRTT7mNadmypVauXKny8nJdddVV6tevn1555ZXTru7MmjVLN910k2699Vb17dtXhYWF+vDDDxUVFeXxZ0xNTdUHH3ygf//737r00kt12WWX6ZlnnnEFmcjISL3yyisaOHCgevXqpRUrVuj//b//55X7DQF24DD/e3IfAADAT7CiAwAA/BZBBwAA+C2CDgAA8FsEHQAA4LcIOgAAwG8RdAAAgN8i6AAAAL9F0AEAAH6LoAMAAPwWQQcAAPgtgg4AAPBbBB0AAOC3/j8jUTMYEddwVQAAAABJRU5ErkJggg==\n"
+          },
+          "metadata": {}
+        }
+      ],
+      "source": [
+        "# Elegir algun valor para alpha (probar varias alternativas)\n",
+        "alpha = 0.002 # alpha = 0.003\n",
+        "num_iters = 300000\n",
+        "\n",
+        "# inicializa theta y ejecuta el descenso por el gradiente\n",
+        "theta = np.zeros(4)\n",
+        "theta, J_history = gradientDescentMulti(X, y, theta, alpha, num_iters)\n",
+        "\n",
+        "# Grafica la convergencia del costo\n",
+        "pyplot.plot(np.arange(len(J_history)), J_history, lw=2)\n",
+        "pyplot.xlabel('Numero de iteraciones')\n",
+        "pyplot.ylabel('Costo J')\n",
+        "\n",
+        "# Muestra los resultados del descenso por el gradiente\n",
+        "print('theta calculado por el descenso por el gradiente: {:s}'.format(str(theta)))\n",
+        "\n",
+        "# Estimar el precio para una casa de 1650 sq-ft, con 3 dormitorios\n",
+        "X_array = [1, 40, 20, 2]\n",
+        "X_array[0:3] = (X_array[0:3] - mu) / sigma\n",
+        "price = np.dot(X_array, theta)   # Se debe cambiar esto\n",
+        "\n",
+        "print('El precio predecido para una sitio de 40 su y 20 st mas 2 ambientes (usando el descenso por el gradiente): ${:.0f}'.format(price))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 97,
+      "metadata": {
+        "id": "5Bqbn4VtVn84"
+      },
+      "outputs": [],
+      "source": [
+        "X_array = [1, 16, 3,1]\n",
+        "X_array[0:3] = (X_array[0:3] - mu) / sigma"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 98,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "YiFRyR0DVn84",
+        "outputId": "8eef2db7-cec8-46cd-8bb3-19c53250264c"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[-2.9611357510841674, 0.32789073608233554, 0.7917689358154576]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 98
+        }
+      ],
+      "source": [
+        "X_array[0:3]"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Tq1EPGUHVn84"
+      },
+      "source": [
+        "<a id=\"section7\"></a>\n",
+        "### 2.3 Ecuacion de la Normal\n",
+        "\n",
+        "Una manera de calcular rapidamente el modelo de una regresion lineal es:\n",
+        "\n",
+        "$$ \\theta = \\left( X^T X\\right)^{-1} X^T\\vec{y}$$\n",
+        "\n",
+        "Utilizando esta formula no requiere que se escale ninguna caracteristica, y se obtendra una solucion exacta con un solo calculo: no hay “bucles de convergencia” como en el descenso por el gradiente. \n",
+        "\n",
+        "Primero se recargan los datos para garantizar que las variables no esten modificadas. Recordar que no es necesario escalar las caracteristicas, se debe agregar la columna de unos a la matriz $X$ para tener el termino de intersección($\\theta_0$). "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 99,
+      "metadata": {
+        "id": "5UE0T8ENVn84"
+      },
+      "outputs": [],
+      "source": [
+        "# Cargar datos\n",
+        "data = np.loadtxt(os.path.join('/content/drive/MyDrive/datasets/AlquilerPrecio.txt'), delimiter=',')\n",
+        "X = data[:100, 4:7]\n",
+        "y = data[:100, 2]\n",
+        "m = y.size\n",
+        "X = np.concatenate([np.ones((m, 1)), X], axis=1)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 100,
+      "metadata": {
+        "id": "JQrs-6cGVn84"
+      },
+      "outputs": [],
+      "source": [
+        "def normalEqn(X, y):\n",
+        "  \n",
+        "    theta = np.zeros(X.shape[1])\n",
+        "    \n",
+        "    theta = np.dot(np.dot(np.linalg.inv(np.dot(X.T,X)),X.T),y)\n",
+        "    \n",
+        "    return theta"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 101,
+      "metadata": {
+        "id": "d0OzpOyyVn84",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "b55e6c29-b632-4f4a-e0f5-7c90375fd27c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Theta calculado a partir de la ecuación de la normal: [-9.08243645e+04  1.28350556e+04  4.94066745e+01 -8.58039004e+03]\n",
+            "Precio predecido para una cada de superficie de 1650 sq-ft y 3 dormitorios (usando la ecuación de la normal): $406405\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Calcula los parametros con la ecuación de la normal\n",
+        "theta = normalEqn(X, y);\n",
+        "\n",
+        "# Muestra los resultados optenidos a partir de la aplicación de la ecuación de la normal\n",
+        "print('Theta calculado a partir de la ecuación de la normal: {:s}'.format(str(theta)));\n",
+        "\n",
+        "# Estimar el precio para una casa de superficie de 1650 sq-ft y tres dormitorios\n",
+        "\n",
+        "X_array = [1, 40, 20, 2]\n",
+        "price = np.dot(X_array, theta) \n",
+        "\n",
+        "print('Precio predecido para una cada de superficie de 1650 sq-ft y 3 dormitorios (usando la ecuación de la normal): ${:.0f}'.format(price))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X_array = [1, 1650, 3]\n",
+        "#X_array[1:3] = (X_array[1:3] - mu) / sigma\n",
+        "X_array[0:3]"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "yPCkjuRryyEd",
+        "outputId": "bdebad58-a65b-447d-d65c-418974711e26"
+      },
+      "execution_count": 102,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[1, 1650, 3]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 102
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "AaY2weQ6y04r"
+      },
+      "execution_count": 102,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.8.5"
+    },
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
