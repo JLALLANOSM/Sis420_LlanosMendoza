@@ -1,0 +1,13 @@
+En este laboratorio se utilizo el cuadernillo brindado por el docente de la materia 
+para resolver ejercicios regresion lineal.
+
+se utilizo un data set el cual su objetivo es calcular el precio de alquiler de casas
+sus x o caracteristicas basicamente son o alguna de ellas, tamaño de la vivienda, 
+tamaño de area de recreacion, area de terraza, cantidad cuartos y otro. 
+pero como este algoritmo solo utiliza una sola x se utilizo el area de vivienda.
+con el cual se produjo los siguiente thetas 
+
+thetas: 9886.8208, 8383.6977
+ los cuales representan x0 y x1 respectivamente. 
+
+y luego se realizo las predicciones. 
