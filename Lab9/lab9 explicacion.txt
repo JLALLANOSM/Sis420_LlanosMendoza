@@ -1,0 +1,24 @@
+Desarrollar lo siguiente:
+Con el dataset elegido individualmente, utilizar el cuadernillo empleado en clase para regresiones lineales multiples para identificar, los mejores valores de thetha, el menor valor de la funcion de costo, el numero de iteraciones suficientes para alcanzar los valores ideales de theta, el mejor valor de alfa (coheficiente de aprendizaje) y realizar la grafica del comportamiento del costo en funcion al numero de iteraciones y verificar los resultado con la ecuacion de la normal.
+
+Se debe incluir el codigo y la direccion del repositorio empleado de manera obligatoria.
+
+
+Para la solucion de este laboratorio se utilizo el dataset: alquilerprecio
+
+el cual tambien se utilizo para el lab 7, pero en este caso se utiliza mas caracteristicas
+ya que utilizamos el algoritmo de prediccion multivariable, regresion lienal multivaribale
+y los mejores thetas calculado son:
+
+thetas: [406959.99999999 170389.36287503   1466.1193182   -7369.15147998]
+
+la prediccion para valores de [1, 40, 20, 2] area ocupable, area terrza, cantidad cuartos
+
+la prediccio es: 305945
+¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡
+
+Ecuacion normal
+
+Theta calculado a partir de la ecuación de la normal: [-9.08243645e+04  1.28350556e+04 4.94066745e+01 -8.58039004e+03]
+
+El precio predecido para una sitio de 40 su y 20 st mas 2 ambientes (usando la ecuación de la normal): $406405
