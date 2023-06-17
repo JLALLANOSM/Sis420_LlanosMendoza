@@ -1,0 +1,29 @@
+
+El código proporcionado implementa el algoritmo de búsqueda de mejoría primero con solución (Best-First Search)
+ para encontrar una solución a un problema dado. Comienza creando un nodo raíz con el estado inicial y lo agrega 
+a la lista de nodos frontera. A continuación, se inicia un bucle que se ejecuta mientras no se haya encontrado la solución y aún haya nodos en la lista de nodos frontera.
+
+En cada iteración del bucle, se selecciona un nodo de la lista de nodos frontera, se verifica si es la solución buscada y, 
+si no lo es, se generan los nodos hijos a partir de su estado. Los nodos hijos se agregan a la lista de nodos frontera si 
+no están en la lista de nodos visitados ni en la lista de nodos frontera.
+
+Después de generar los nodos hijos, se ordena la lista de nodos frontera en función de una heurística específica que evalúa 
+la promesa de cada nodo. Este proceso se repite hasta que se encuentra la solución o hasta que la lista de nodos frontera se vacía. 
+En caso de que no se encuentre una solución, se devuelve None.
+
+Heurística de distancia Euclidiana: Esta heurística se utiliza en problemas espaciales donde 
+se busca encontrar una ruta óptima entre dos ubicaciones. La capacidad máxima dependerá de la 
+resolución del problema y la precisión de las coordenadas utilizadas para calcular la distancia euclidiana.
+
+Heurística de diferencia de valores: Si el problema implica encontrar una configuración óptima basada en valores o 
+atributos, se puede utilizar una heurística que compare la diferencia entre los valores actuales y los valores objetivo. 
+La capacidad máxima en este caso dependerá del rango de valores y la precisión requerida.
+
+Heurística de número de elementos mal ubicados: Esta heurística se utiliza comúnmente en problemas de ordenamiento 
+o rompecabezas donde se busca alcanzar un estado objetivo. La capacidad máxima será igual al número total de elementos
+ en el problema, ya que ese sería el máximo número de elementos que podrían estar mal ubicados.
+
+En este caso utilizamos una Heuristica mas general, basada en distancia euclidiana.
+con el cual se logro generar el algoritmo para  12 datos 
+
+
