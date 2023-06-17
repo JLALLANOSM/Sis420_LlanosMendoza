@@ -1,0 +1,19 @@
+A partir de un dataset sintetico, para modelar el caso de una regresion polinomica, utilizando el cuadernillo de regresion lineal multiple revisado en clase, adecuar el mismo para calcular los valores de theta y realizar las respectivas predicciones. La curva a la cual ajuste el modelo debera ser elegida por su persona.
+
+
+en este caso se creo un data sintetico el cual constaba de x o caracteristica 
+como ser anio y anios al cuadrado y el ganancia del mismo, en el cual se llego 
+a obtener las sigueintes thetas mejores.
+
+thetas: [ 61909.09090909  26184.83877245 -24797.44336956]
+
+para un año de 60 predijo: $49218   gradiente 
+
+el data set trata de mostrar las ganancias de una empresa las ganacias cada 5 años 
+cuando decimos 60 estamos diciendo que cuando se ganaria en 60 años. 
+
+con la regresion polinomica: 
+a partir de la ecuacion normal 
+los mejores thetas son: [ 3.89030303e+04  1.88559441e+03 -2.91841492e+01]
+y la prediccion es para 60 años : $46976
+
